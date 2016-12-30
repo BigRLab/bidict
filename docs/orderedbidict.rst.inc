@@ -87,11 +87,11 @@ To customize this behavior, you can override
 in a subclass::
 
     >>> class MyOrderedBidict(orderedbidict):
-    ...    @staticmethod
-    ...    def _should_compare_order_sensitive(mapping):
-    ...        # Can return False to never do order-sensitive comparison.
+    ...    def _should_compare_order_sensitive(self, mapping):
+    ...        # Can return False to never do order-sensitive comparison. Or
+    ...        # can return isinstance(mapping, (orderedbidict, OrderedDict)).
     ...        # To make order-sensitive only if mapping is reversible:
-    ...        return hasattr(mapping, '__reversed__')
+    ...        return bool(getattr(mapping, '__reversed__', None))
 
     >>> m = MyOrderedBidict(o1)
     >>> m == OrderedDict(o2)  # OrderedDict is reversible -> order-sensitive
@@ -100,12 +100,11 @@ in a subclass::
     True
 
 Note that with the custom ``_should_compare_order_sensitive`` implementation above,
-*comparing with a dict would be order-sensitive in PyPy but not in CPython*.
-This is because on on PyPy,
-dicts have a `__reversed__` attribute,
+*comparing with a dict would be order-sensitive in PyPy but not in CPython*,
+because on PyPy dicts implement `__reversed__` (!),
 whereas on CPython they do not.
-This implementation is therefore not recommended if you might ever require
-consistent behavior across Python implementations.
+Watch out for that if you ever want to do something like this,
+and expect consistency between CPython and PyPy.
 
 :class:`orderedbidict <bidict.orderedbidict>` also comes in
 :class:`loose <bidict.looseorderedbidict>` and

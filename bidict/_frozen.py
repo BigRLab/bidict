@@ -1,8 +1,8 @@
 """Implements :class:`bidict.frozenbidict`."""
 
-from .compat import viewitems, iteritems
 from ._common import BidictBase
 from ._ordered import OrderedBidictBase
+from .compat import viewitems, iteritems
 from functools import reduce
 
 

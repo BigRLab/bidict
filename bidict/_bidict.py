@@ -133,4 +133,6 @@ class bidict(BidictBase):
         self._update(False, on_dup_key, on_dup_val, on_dup_kv, items)
 
 
+# MutableMapping does not implement __subclasshook__.
+# Must register as a subclass explicitly.
 MutableMapping.register(bidict)
