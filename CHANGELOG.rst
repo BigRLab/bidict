@@ -17,22 +17,35 @@ when a new version of bidict is released.
 0.13.0 (not yet released)
 -------------------------
 
-- :class:`BidirectionalMapping <bidict.BidirectionalMapping>`
+- Support Python 3.6.
+
+- Make :attr:`frozenorderedbidict.__hash__
+  <bidict.frozenorderedbidict.__hash__>` order-sensitive.
+
+  ``hash(frozenorderedbidict([(1, 1), (2, 2)]))`` is now very unlikely to equal
+  ``hash(frozenorderedbidict([(2, 2), (1, 1)]))``.
+  The objects don't compare equal, so their hashes shouldn't be equal either.
+  Avoids hash collisions when inserting such objects into the same set/mapping.
+
+- Remove unused ``bidict.compat.izip_longest``.
+
+- :class:`BidirectionalMapping <bidict.abc.BidirectionalMapping>`
   has been refactored into an abstract base class as its name suggests,
   matching the Mapping ABCs in :mod:`collections.abc`.
   The concrete method implementations it used to provide have been moved
-  into a new :class:`BidictBase <bidict._common.BidictBase>` subclass.
+  into a new :class:`BidictBase <bidict.BidictBase>` subclass.
 
-  :class:`BidirectionalMapping <bidict.BidirectionalMapping>`
-  now also implements ``__subclasshook__``,
+  :class:`BidirectionalMapping <bidict.abc.BidirectionalMapping>`
+  now also implements
+  :attr:`__subclasshook__ <bidict.abc.BidirectionalMapping.__subclasshook__>`,
   so any class that provides a conforming set of attributes
-  (enumerated in :attr:`_subclsattrs <bidict.BidirectionalMapping._subclsattrs>`)
+  (enumerated in :attr:`_subclsattrs <bidict.abc.BidirectionalMapping._subclsattrs>`)
   will be considered a
-  :class:`BidirectionalMapping <bidict.BidirectionalMapping>`
+  :class:`BidirectionalMapping <bidict.abc.BidirectionalMapping>`
   subclass automatically.
 
 - ``OrderedBidirectionalMapping`` has been renamed to
-  :class:`OrderedBidictBase <bidict._ordered.OrderedBidictBase>`,
+  :class:`OrderedBidictBase <bidict.OrderedBidictBase>`,
   to better reflect its function.
   (It is not an ABC.)
 
@@ -51,6 +64,8 @@ when a new version of bidict is released.
 
 - More concise repr strings for empty bidicts.
 
+  e.g. ``bidict()`` rather than ``bidict({})`` and
+  ``orderedbidict()`` rather than ``orderedbidict([])``.
 
 0.12.0 (2016-07-03)
 -------------------
@@ -119,7 +134,7 @@ when a new version of bidict is released.
   - :func:`bidict.compat.iterkeys`
   - :func:`bidict.compat.itervalues`
   - :func:`bidict.compat.izip`
-  - :func:`bidict.compat.izip_longest`
+  - ``bidict.compat.izip_longest``
 
   to complement the existing
   :func:`iteritems() <bidict.compat.iteritems>` and
@@ -129,9 +144,9 @@ when a new version of bidict is released.
 - More efficient implementations of
   :func:`pairs() <bidict.util.pairs>`,
   :func:`inverted() <bidict.util.inverted>`, and
-  :func:`bidict.copy() <bidict._common.BidictBase.copy>`.
+  :func:`bidict.copy() <bidict.BidictBase.copy>`.
 
-- Implement :func:`bidict.__copy__() <bidict._common.BidictBase.__copy__>`
+- Implement :func:`bidict.__copy__() <bidict.BidictBase.__copy__>`
   for use with the :mod:`copy` module.
 
 - Fix issue preventing a client class from inheriting from
@@ -224,7 +239,7 @@ Breaking API Changes
 ^^^^^^^^^^^^^^^^^^^^
 
 - Remove ``bidict.__invert__``, and with it, support for the ``~b`` syntax.
-  Use :attr:`b.inv <bidict.BidirectionalMapping.inv>` instead.
+  Use :attr:`b.inv <bidict.BidictBase.inv>` instead.
   `#19 <https://github.com/jab/bidict/issues/19>`_
 
 - Remove support for the slice syntax.
@@ -232,7 +247,7 @@ Breaking API Changes
   `#19 <https://github.com/jab/bidict/issues/19>`_
 
 - Remove ``bidict.invert``.
-  Use :attr:`b.inv <bidict.BidirectionalMapping.inv>`
+  Use :attr:`b.inv <bidict.BidictBase.inv>`
   rather than inverting a bidict in place.
   `#20 <https://github.com/jab/bidict/issues/20>`_
 

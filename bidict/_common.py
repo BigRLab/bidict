@@ -1,13 +1,9 @@
-"""
-Provides :class:`BidirectionalMapping` and other common functionality.
+"""Provides :class:`BidictBase` and other common functionality."""
 
-Exception classes and duplication behaviors are provided here too.
-"""
-
+from .abc import BidirectionalMapping
 from .compat import PY2, iteritems
 from .util import pairs
-from abc import abstractproperty
-from collections import Mapping
+from collections import ItemsView
 
 
 def _proxied(methodname, attrname='_fwd', doc=None):
@@ -21,50 +17,12 @@ def _proxied(methodname, attrname='_fwd', doc=None):
     return proxy
 
 
-class BidirectionalMapping(Mapping):
-    """Abstract base class for bidirectional mappings.
-
-    .. py:attribute:: _subclsattrs
-
-        The attributes that ``__subclasshook__`` checks for to determine
-        whether a class is a subclass of :class:`BidirectionalMapping`.
-
-    """
-
-    __slots__ = ()
-
-    @abstractproperty
-    def inv(self):
-        """The inverse bidict."""
-        raise NotImplementedError
-
-    def __inverted__(self):
-        """Get an iterator over the items in :attr:`inv`."""
-        return iteritems(self.inv)
-
-    _subclsattrs = frozenset({
-        'inv', '__inverted__',
-        # see "Mapping" in the table at
-        # https://docs.python.org/3/library/collections.abc.html#collections-abstract-base-classes
-        '__getitem__', '__iter__', '__len__',  # abstract methods
-        '__contains__', 'keys', 'items', 'values', 'get', '__eq__', '__ne__',  # mixin methods
-    })
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        """Make classes with a conforming API a subclass automatically."""
-        if cls is BidirectionalMapping:
-            mro = C.__mro__
-            return all(any(B.__dict__.get(i) for B in mro) for i in cls._subclsattrs)
-        return NotImplemented
-
-
 class _marker(object):
     def __init__(self, id):
         self.id = id
 
     def __repr__(self):
-        return '<%s>' % self.id
+        return '<%s>' % self.id  # pragma: no cover
 
 
 class DuplicationBehavior(_marker):
@@ -190,11 +148,8 @@ class BidictBase(BidirectionalMapping):
         return s + '{' + ', '.join('%r: %r' % i for i in iteritems(self)) + '})'
 
     def __eq__(self, other):
+        # This should be faster than using Mapping.__eq__'s implementation.
         return self._fwd == other
-
-    def __ne__(self, other):
-        # http://stackoverflow.com/a/30676267/161642
-        return not self == other
 
     def _pop(self, key):
         val = self._fwd.pop(key)
@@ -326,6 +281,8 @@ class BidictBase(BidirectionalMapping):
 
     def copy(self):
         """Like :py:meth:`dict.copy`."""
+        # This should be faster than ``return self.__class__(self)`` because
+        # it avoids the unnecessary duplicate checking.
         copy = object.__new__(self.__class__)
         copy._isinv = self._isinv
         copy._fwd = self._fwd.copy()
@@ -352,12 +309,16 @@ class BidictBase(BidirectionalMapping):
         '*ValuesView* object, conferring set-like benefits.'
     if PY2:  # pragma: no cover
         viewkeys = _proxied('viewkeys')
-        viewitems = _proxied('viewitems')
-        itervalues = _proxied('iterkeys', attrname='inv',
-                              doc=dict.itervalues.__doc__)
+
         viewvalues = _proxied('viewkeys', attrname='inv',
                               doc=values.__doc__.replace('values()', 'viewvalues()'))
         values.__doc__ = "Like dict's ``values``."
+
+        # Use ItemsView here rather than proxying to _fwd.viewitems() so that
+        # frozenbidict.__hash__ can call ._hash() on this, and so that
+        # OrderedBidictBase (whose _fwd's values are nodes, not bare values)
+        # can use it too.
+        viewitems = lambda self: ItemsView(self)
 
 
 class BidictException(Exception):

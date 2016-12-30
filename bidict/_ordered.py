@@ -1,11 +1,9 @@
 """Implements :class:`bidict.orderedbidict` and friends."""
 
 from ._bidict import bidict
-from ._common import BidirectionalMapping, Mapping, _marker, _missing
-from ._frozen import frozenbidict
-from ._loose import loosebidict
-from .compat import PY2, iteritems, izip
-from collections import ItemsView
+from ._common import BidictBase, _marker, _missing
+from .compat import iteritems, izip
+from collections import Mapping
 
 
 _PRV = 1
@@ -29,11 +27,10 @@ def _make_iter(reverse=False, name='__iter__', doc=None):
     return _iter
 
 
-class OrderedBidictBase(BidirectionalMapping):
+class OrderedBidictBase(BidictBase):
     """Base class for :class:`orderedbidict` and :class:`frozenorderedbidict`."""
 
-    def __init__(self, *args, **kw):
-        """Like OrderedDict's ``__init__``."""
+    def __init__(self, *args, **kw):  # noqa: D102
         self._isinv = getattr(args[0], '_isinv', False) if args else False
         self._end = []  # circular doubly-linked list of [{key: val, val: key}, prv, nxt] nodes
         self._init_end()
@@ -51,8 +48,9 @@ class OrderedBidictBase(BidirectionalMapping):
         super(OrderedBidictBase, self)._init_inv()
         self.inv._end = self._end
 
+    # Must override BidictBase.copy since we have different internal structure.
     def copy(self):
-        """Like :py:meth:`dict.copy`."""
+        """Like :attr:`BidictBase.copy <bidict.BidictBase.copy>`."""
         return self.__class__(self)
 
     __copy__ = copy
@@ -182,21 +180,13 @@ class OrderedBidictBase(BidirectionalMapping):
             return all(i == j for (i, j) in izip(iteritems(self), iteritems(other)))
         return all(self.get(k, _missing) == v for (k, v) in iteritems(other))
 
-    @staticmethod
-    def _should_compare_order_sensitive(mapping):
+    def _should_compare_order_sensitive(self, mapping):
         """Whether we should compare order-sensitively to ``mapping``.
 
         Returns True iff ``isinstance(mapping, OrderedBidictBase)``.
         Override this in a subclass to customize this behavior.
         """
         return isinstance(mapping, OrderedBidictBase)
-
-    if PY2:  # pragma: no cover
-        # Override BidirectionalMapping.viewitems which just proxies to _fwd
-        # (since our _fwd's values are nodes, not bare values).
-        def viewitems(self):
-            """Like :meth:`collections.OrderedDict.viewitems`."""
-            return ItemsView(self)
 
 
 class orderedbidict(OrderedBidictBase, bidict):
@@ -227,11 +217,3 @@ class orderedbidict(OrderedBidictBase, bidict):
             node[_PRV] = end
             node[_NXT] = fst
             end[_NXT] = fst[_PRV] = node
-
-
-class frozenorderedbidict(OrderedBidictBase, frozenbidict):
-    """Immutable, hashable :class:`bidict.orderedbidict` type."""
-
-
-class looseorderedbidict(orderedbidict, loosebidict):
-    """Mutable orderedbidict with *OVERWRITE* duplication behaviors by default."""

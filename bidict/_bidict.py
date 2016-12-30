@@ -4,7 +4,7 @@ from ._common import BidictBase, OVERWRITE, RAISE, ON_DUP_VAL
 from collections import MutableMapping
 
 
-class bidict(BidictBase, MutableMapping):
+class bidict(BidictBase):
     """Mutable bidirectional map type."""
 
     def __delitem__(self, key):
@@ -131,3 +131,6 @@ class bidict(BidictBase, MutableMapping):
         none of the items is inserted.
         """
         self._update(False, on_dup_key, on_dup_val, on_dup_kv, items)
+
+
+MutableMapping.register(bidict)

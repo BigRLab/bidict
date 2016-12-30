@@ -9,6 +9,6 @@ test -z "$BIDICT_BUILD_DOCS_ENABLE" || { ./build-docs.sh || { EXIT=1 && echo -e 
 
 test -z "$BIDICT_COVERAGE_ENABLE" || COV="--cov=bidict"
 test -z "$BENCHMARK_DIR" || BENCHMARK_STORAGE="--benchmark-storage=$BENCHMARK_DIR"
-py.test $COV $BENCHMARK_STORAGE || { EXIT=1 && echo -e "pytest failed \0007"; }
+py.test $COV $BENCHMARK_STORAGE $BENCHMARK_SKIP || { EXIT=1 && echo -e "pytest failed \0007"; }
 
 exit $EXIT

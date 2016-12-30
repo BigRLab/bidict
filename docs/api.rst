@@ -14,14 +14,12 @@ bidict
     :exclude-members: __dict__,__weakref__
     :private-members:
 
-.. autoclass:: bidict._common.BidictBase
+bidict.abc
+-----------
+
+.. automodule:: bidict.abc
     :members:
     :special-members:
-    :exclude-members: __dict__,__weakref__
-
-.. autoclass:: bidict._ordered.OrderedBidictBase
-
-   .. automethod:: _should_compare_order_sensitive(mapping)
 
 bidict.util
 -----------

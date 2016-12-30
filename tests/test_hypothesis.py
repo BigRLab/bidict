@@ -1,5 +1,5 @@
 """
-Property-based tests using https://warehouse.python.org/project/hypothesis/
+Property-based tests using https://hypothesis.readthedocs.io
 """
 
 from bidict import (
