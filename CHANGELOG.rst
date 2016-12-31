@@ -19,35 +19,63 @@ when a new version of bidict is released.
 
 - Support Python 3.6.
 
-- Make :attr:`frozenorderedbidict.__hash__
-  <bidict.frozenorderedbidict.__hash__>` order-sensitive.
-
-  ``hash(frozenorderedbidict([(1, 1), (2, 2)]))`` is now very unlikely to equal
-  ``hash(frozenorderedbidict([(2, 2), (1, 1)]))``.
-  The objects don't compare equal, so their hashes shouldn't be equal either.
-  Avoids hash collisions when inserting such objects into the same set/mapping.
-
-- Remove unused ``bidict.compat.izip_longest``.
-
-- :class:`BidirectionalMapping <bidict.abc.BidirectionalMapping>`
-  has been refactored into an abstract base class as its name suggests,
-  matching the Mapping ABCs in :mod:`collections.abc`.
+- :class:`BidirectionalMapping <bidict.BidirectionalMapping>`
+  has been refactored into an abstract base class,
+  following the way :class:`collections.abc.Mapping` works.
   The concrete method implementations it used to provide have been moved
   into a new :class:`BidictBase <bidict.BidictBase>` subclass.
 
-  :class:`BidirectionalMapping <bidict.abc.BidirectionalMapping>`
+  :class:`BidirectionalMapping <bidict.BidirectionalMapping>`
   now also implements
-  :attr:`__subclasshook__ <bidict.abc.BidirectionalMapping.__subclasshook__>`,
+  :attr:`__subclasshook__ <bidict.BidirectionalMapping.__subclasshook__>`,
   so any class that provides a conforming set of attributes
-  (enumerated in :attr:`_subclsattrs <bidict.abc.BidirectionalMapping._subclsattrs>`)
+  (enumerated in :attr:`_subclsattrs <bidict.BidirectionalMapping._subclsattrs>`)
   will be considered a
-  :class:`BidirectionalMapping <bidict.abc.BidirectionalMapping>`
+  :class:`BidirectionalMapping <bidict.BidirectionalMapping>`
   subclass automatically.
 
 - ``OrderedBidirectionalMapping`` has been renamed to
   :class:`OrderedBidictBase <bidict.OrderedBidictBase>`,
   to better reflect its function.
   (It is not an ABC.)
+
+- A new
+  :class:`FrozenBidictBase <bidict.FrozenBidictBase>` class
+  has been factored out of
+  :class:`frozenbidict <bidict.frozenbidict>` and
+  :class:`frozenorderedbidict <bidict.frozenorderedbidict>`.
+  This implements common behavior such as caching the result of
+  :attr:`__hash__ <bidict.FrozenBidictBase.__hash__>`
+  after the first call.
+
+  It also exposes a new
+  :attr:`_HASH_NITEMS_MAX <bidict.FrozenBidictBase._HASH_NITEMS_MAX>`
+  attribute which can be tuned to bound the time and space complexity when
+  computing the hash.
+
+- :attr:`frozenbidict's __hash__ implementation
+  <bidict.frozenbidict._compute_hash>`
+  and
+  :attr:`frozenorderedbidict's __hash__ implementation
+  <bidict.frozenorderedbidict._compute_hash>`
+  now both create an ephemeral copy of the items to hash
+  (in a :class:`frozenset` and :class:`tuple`, respectively)
+  so as to use the faster ``frozenset_hash`` and ``tuplehash`` routines
+  implemented in C on CPython.
+  It is not possible to use these faster routines with an iterable
+  because there is no such API.
+  Use
+  :attr:`_HASH_NITEMS_MAX <bidict.FrozenBidictBase._HASH_NITEMS_MAX>`
+  to limit the size of the ephemeral copies if they create an issue for you
+  and `report your use case <https://gitter.im/jab/bidict>`_ if possible.
+
+- Make :attr:`frozenorderedbidict's __hash__ implementation
+  <bidict.frozenorderedbidict._compute_hash>` order-sensitive.
+
+  ``hash(frozenorderedbidict([x, y]))`` is now very unlikely to equal
+  ``hash(frozenorderedbidict([y, x]))``.
+  They don't compare equal so their hashes shouldn't be equal either.
+  Avoids hash collisions when inserting such objects into the same set/mapping.
 
 - Add :attr:`_fwd_class <bidict.BidictBase._fwd_class>` and
   :attr:`_inv_class <bidict.BidictBase._inv_class>` attributes
@@ -66,6 +94,8 @@ when a new version of bidict is released.
 
   e.g. ``bidict()`` rather than ``bidict({})`` and
   ``orderedbidict()`` rather than ``orderedbidict([])``.
+
+- Remove unused ``bidict.compat.izip_longest``.
 
 0.12.0 (2016-07-03)
 -------------------

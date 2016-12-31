@@ -10,16 +10,15 @@ See https://bidict.readthedocs.io for comprehensive documentation.
 
 """
 
-from ._common import (BidictBase, BidictException,
+from ._common import (BidirectionalMapping, BidictBase, BidictException,
                       DuplicationBehavior, IGNORE, OVERWRITE, RAISE,
                       DuplicationError, KeyDuplicationError, ValueDuplicationError,
                       KeyAndValueDuplicationError)
 from ._bidict import bidict
-from ._frozen import frozenbidict, frozenorderedbidict
+from ._frozen import FrozenBidictBase, frozenbidict, frozenorderedbidict
 from ._loose import loosebidict, looseorderedbidict
 from ._named import namedbidict
 from ._ordered import OrderedBidictBase, orderedbidict
-from .abc import BidirectionalMapping
 from .util import pairs, inverted
 
 __all__ = (
@@ -37,6 +36,7 @@ __all__ = (
     'bidict',
     'loosebidict',
     'looseorderedbidict',
+    'FrozenBidictBase',
     'frozenbidict',
     'frozenorderedbidict',
     'namedbidict',

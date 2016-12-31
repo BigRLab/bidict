@@ -14,13 +14,6 @@ bidict
     :exclude-members: __dict__,__weakref__
     :private-members:
 
-bidict.abc
------------
-
-.. automodule:: bidict.abc
-    :members:
-    :special-members:
-
 bidict.util
 -----------
 

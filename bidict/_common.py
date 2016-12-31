@@ -1,20 +1,51 @@
-"""Provides :class:`BidictBase` and other common functionality."""
+"""Provides various common functionality."""
 
-from .abc import BidirectionalMapping
 from .compat import PY2, iteritems
 from .util import pairs
-from collections import ItemsView
+from abc import abstractproperty
+from collections import ItemsView, Mapping
 
 
-def _proxied(methodname, attrname='_fwd', doc=None):
-    """Make a func that calls the indicated method on the indicated attribute."""
-    def proxy(self, *args):
-        attr = getattr(self, attrname)
-        meth = getattr(attr, methodname)
-        return meth(*args)
-    proxy.__name__ = methodname
-    proxy.__doc__ = doc or "Like dict's ``%s``." % methodname
-    return proxy
+class BidirectionalMapping(Mapping):
+    """Abstract base class for bidirectional mappings.
+    Extends :class:`collections.abc.Mapping`.
+
+    .. py:attribute:: _subclsattrs
+
+        The attributes that :attr:`__subclasshook__` checks for to determine
+        whether a class is a subclass of :class:`BidirectionalMapping`.
+
+    """
+
+    __slots__ = ()
+
+    @abstractproperty
+    def inv(self):
+        """The inverse bidict."""
+        raise NotImplementedError  # pragma: no cover
+
+    def __inverted__(self):
+        """Get an iterator over the items in :attr:`inv`."""
+        return iteritems(self.inv)
+
+    _subclsattrs = frozenset({
+        'inv', '__inverted__',
+        # see "Mapping" in the table at
+        # https://docs.python.org/3/library/collections.abc.html#collections-abstract-base-classes
+        '__getitem__', '__iter__', '__len__',  # abstract methods
+        '__contains__', 'keys', 'items', 'values', 'get', '__eq__', '__ne__',  # mixin methods
+    })
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        """Check if C provides all the attributes in :attr:`_subclsattrs`.
+
+        Causes conforming classes to be virtual subclasses automatically.
+        """
+        if cls is BidirectionalMapping:
+            mro = C.__mro__
+            return all(any(B.__dict__.get(i) for B in mro) for i in cls._subclsattrs)
+        return NotImplemented
 
 
 class _marker(object):
@@ -55,6 +86,17 @@ DuplicationBehavior.OVERWRITE = OVERWRITE = DuplicationBehavior('OVERWRITE')
 DuplicationBehavior.IGNORE = IGNORE = DuplicationBehavior('IGNORE')
 DuplicationBehavior.ON_DUP_VAL = ON_DUP_VAL = DuplicationBehavior('ON_DUP_VAL')
 _missing = _marker('MISSING')
+
+
+def _proxied(methodname, attrname='_fwd', doc=None):
+    """Make a func that calls the indicated method on the indicated attribute."""
+    def proxy(self, *args):
+        attr = getattr(self, attrname)
+        meth = getattr(attr, methodname)
+        return meth(*args)
+    proxy.__name__ = methodname
+    proxy.__doc__ = doc or "Like dict's ``%s``." % methodname
+    return proxy
 
 
 class BidictBase(BidirectionalMapping):
