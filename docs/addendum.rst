@@ -99,7 +99,7 @@ Caveats
 
 .. include:: caveat-inv-reference-cycle.rst.inc
 
-.. include:: caveat-different-values-same-hash.rst.inc
+.. include:: caveat-equivalence-vs-identity.rst.inc
 
 .. include:: caveat-nan-as-key.rst.inc
 
