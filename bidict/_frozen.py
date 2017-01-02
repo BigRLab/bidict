@@ -4,11 +4,10 @@ from ._common import BidictBase, _marker
 from ._ordered import OrderedBidictBase
 from .compat import iteritems
 from abc import abstractmethod
-from collections import Hashable
 from itertools import chain, islice
 
 
-class FrozenBidictBase(Hashable):
+class FrozenBidictBase(BidictBase):
     """
     Base class for frozen bidict types.
 
@@ -34,7 +33,7 @@ class FrozenBidictBase(Hashable):
     @abstractmethod
     def _compute_hash(self, items):
         """Abstract method to actually compute the hash of ``items``."""
-        return NotImplemented
+        return NotImplemented  # pragma: no cover
 
     def __hash__(self):
         """
@@ -43,10 +42,10 @@ class FrozenBidictBase(Hashable):
         The number of participating items may be limited by
         :attr:`_HASH_NITEMS_MAX`.
 
-        Delegates to subclasses' :attr:`_compute_hash` implementations on the
-        first call, then caches the result to make future calls O(1).
+        Delegates to :attr:`_compute_hash` on the first call, then caches the
+        result to make future calls O(1).
 
-        Creates an iterable of items based on :attr:`_HASH_NITEMS_MAX`
+        Creates an :func:`itertools.islice` of :attr:`_HASH_NITEMS_MAX` items
         and passes it to :attr:`_compute_hash`.
         A marker item derived from the class name is also prepended, to
         canonicalize the resulting hash.
@@ -61,43 +60,59 @@ class FrozenBidictBase(Hashable):
         return hv
 
 
-class frozenbidict(FrozenBidictBase, BidictBase):
+class frozenbidict(FrozenBidictBase):
     """Regular frozen bidict type."""
+
+    # Python sets __hash__ to None implicitly if not set explicitly.
+    __hash__ = FrozenBidictBase.__hash__
 
     def _compute_hash(self, items):
         """
-        Because the items of a :class:`frozenbidict` have no guaranteed order,
-        this could use the set hash algorithm provided by
-        ``collections.Set._hash()`` to incrementally compute a hash from an
-        iterable of items in constant space. However, instead this creates an
-        ephemeral frozenset out of ``items`` which is passed to :func:`hash`.
-        On CPython, this results in the faster ``frozenset_hash`` routine
-        (implemented in ``setobject.c``) being used, trading space for time.
-        Python does not expose a way to use the ``frozenset_hash`` algorithm
-        with an iterable, so an ephemeral frozenset must be created to use it.
+        Creates an ephemeral frozenset out of the given ``items``
+        and returns the result of passing it to :func:`hash`.
+        On CPython, this results in the fast ``frozenset_hash`` routine
+        (implemented in ``setobject.c``) being used.
+
+        CPython does not expose a way to use its fast C implementation of
+        its set hashing algorithm with any iterable,
+        so the ephemeral frozenset must be created to use it.
+        A pure Python implementation of this algorithm is available in
+        :func:`collections.Set._hash` which could be used instead
+        to incrementally compute the hash in constant space,
+        but it's noticeably slower than the C implementation,
+        so it is not preferred here.
 
         Time and space complexity can be limited by setting
         :attr:`_HASH_NITEMS_MAX <FrozenBidictBase._HASH_NITEMS_MAX>`.
+
+        PyPy users may prefer to override this in a subclass to return
+        ``ItemsView(self)._hash()`` to avoid the ephemeral frozenset
+        allocation, but it won't be any faster.
         """
         return hash(frozenset(items))
 
 
-class frozenorderedbidict(FrozenBidictBase, OrderedBidictBase):
+class frozenorderedbidict(OrderedBidictBase, FrozenBidictBase):
     """Ordered frozen bidict type."""
+
+    # Python sets __hash__ to None implicitly if not set explicitly.
+    __hash__ = FrozenBidictBase.__hash__
 
     def _compute_hash(self, items):
         """
-        Because items are ordered, this uses Python's tuple hash algorithm to
-        compute a hash from ``items``.
+        Because items are ordered, this uses Python's tuple hashing algorithm
+        to compute a hash from ``items``.
 
-        Python does not expose its internal tuple hash algorithm so it can be
-        used with any iterable. So to use CPython's fast ``tuplehash`` routine
-        (implemented in ``tupleobject.c``), an ephemeral tuple must be created
-        and passed to :func:`hash`.
+        Python does not expose a way to use its tuple hashing algorithm on an
+        iterable, so this creates an ephemeral tuple from ``items`` and returns
+        the result of passing it to :func:`hash`.
+        On CPython, this results in the fast ``tuplehash`` routine
+        (implemented in ``tupleobject.c``) being used.
 
         Time and space complexity can be limited by setting
         :attr:`_HASH_NITEMS_MAX <FrozenBidictBase._HASH_NITEMS_MAX>`.
         """
-        # Flatten to avoid recursive calls to tuplehash. Noticeable speedup.
+        # Flatten items to avoid recursive calls to tuplehash. Noticeable speedup.
+        # (k1, v1), (k2, v2), ...  ->  k1, v1, k2, v2, ...
         items = chain.from_iterable(items)
         return hash(tuple(items))

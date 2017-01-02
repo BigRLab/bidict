@@ -357,9 +357,8 @@ class BidictBase(BidirectionalMapping):
         values.__doc__ = "Like dict's ``values``."
 
         # Use ItemsView here rather than proxying to _fwd.viewitems() so that
-        # frozenbidict.__hash__ can call ._hash() on this, and so that
         # OrderedBidictBase (whose _fwd's values are nodes, not bare values)
-        # can use it too.
+        # can use it.
         viewitems = lambda self: ItemsView(self)
 
 
