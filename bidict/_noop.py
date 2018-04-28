@@ -8,7 +8,7 @@
 
 """Provides the :obj:`_NOOP` sentinel, for internally signaling "no-op"."""
 
-from ._marker import _Marker
+from ._marker import _make_marker
 
 
-_NOOP = _Marker('NO-OP')
+_NOOP = _make_marker('NOOP')

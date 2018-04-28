@@ -11,26 +11,29 @@
 
 from collections import namedtuple
 
-from ._marker import _Marker
+from ._marker import _MarkerMeta, _make_marker
 
 
 _OnDup = namedtuple('_OnDup', 'key val kv')
 
 
-class DuplicationPolicy(_Marker):
-    """Provides bidict's duplication policies.
+class DuplicationPolicy(_MarkerMeta):
+    """Metaclass for bidict's duplication policies.
 
     *See also* :ref:`basic-usage:Values Must Be Unique`
     """
+    def __repr__(cls):  # noqa: N805 (first argument of a method should be named 'self')
+        return '<DUP_POLICY.%s>' % cls.__name__
 
-    __slots__ = ()
 
+RAISE = _make_marker('RAISE', type_=DuplicationPolicy, dict_={'__doc__': """\
+Raise an exception when a duplication is encountered.
+"""})
 
-#: Raise an exception when a duplication is encountered.
-RAISE = DuplicationPolicy('DUP_POLICY.RAISE')
+OVERWRITE = _make_marker('OVERWRITE', type_=DuplicationPolicy, dict_={'__doc__': """\
+Overwrite an existing item when a duplication is encountered.
+"""})
 
-#: Overwrite an existing item when a duplication is encountered.
-OVERWRITE = DuplicationPolicy('DUP_POLICY.OVERWRITE')
-
-#: Keep the existing item and ignore the new item when a duplication is encountered.
-IGNORE = DuplicationPolicy('DUP_POLICY.IGNORE')
+IGNORE = _make_marker('IGNORE', type_=DuplicationPolicy, dict_={'__doc__': """\
+Keep the existing item and ignore the new item when a duplication is encountered.
+"""})

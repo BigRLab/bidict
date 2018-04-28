@@ -6,14 +6,27 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-"""Provides :class:`_Marker`, an internal type for representing singletons."""
+"""Provides a convenient way of representing singletons for internal use.
 
-from collections import namedtuple
+>>> SENTINEL = _make_marker('SENTINEL')
+>>> SENTINEL
+<SENTINEL>
+>>> SENTINEL()
+Traceback (most recent call last):
+    ...
+TypeError: ...
+"""
 
 
-class _Marker(namedtuple('_Marker', 'name')):
+class _MarkerMeta(type):
+    def __repr__(cls):  # noqa: N805 (first argument of a method should be named 'self')
+        return '<%s>' % cls.__name__
 
-    __slots__ = ()
 
-    def __repr__(self):
-        return '<%s>' % self.name  # pragma: no cover
+class _SingletonClass(object):  # pylint: disable=too-few-public-methods
+    def __init__(self):
+        raise TypeError('Singleton class cannot be instantiated, use class object directly instead')
+
+
+def _make_marker(name, type_=_MarkerMeta, bases=(_SingletonClass,), dict_=None):
+    return type_(name, bases, {} if dict_ is None else dict_)

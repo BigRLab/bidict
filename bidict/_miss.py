@@ -8,7 +8,7 @@
 
 """Provides the :obj:`_MISS` sentinel, for internally signaling "missing/not found"."""
 
-from ._marker import _Marker
+from ._marker import _make_marker
 
 
-_MISS = _Marker('MISSING')
+_MISS = _make_marker('MISSING')

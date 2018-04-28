@@ -16,10 +16,6 @@ bidict
    :inherited-members:
 
 
-.. autodata:: bidict.RAISE
-.. autodata:: bidict.OVERWRITE
-.. autodata:: bidict.IGNORE
-
 .. autofunction:: bidict._util._iteritems_mapping_or_iterable
 .. autofunction:: bidict._util._iteritems_args_kw
 
